@@ -1,150 +1,208 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  SafeAreaView, Alert, KeyboardAvoidingView, Platform, Dimensions,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useUser } from '../context/UserContext';
 
 const { width } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }: any) => {
-  const { login } = useUser();
+  const { login, appTitle } = useUser(); // appTitle 会随着昵称改变而更新
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert('提示', '请输入账号和密码');
       return;
     }
-    const success = login(username.trim(), password);
+    const success = await login(username.trim(), password);
     if (!success) {
       Alert.alert('登录失败', '账号或密码错误');
     }
   };
 
   return (
-    <LinearGradient colors={['#E8F5E9', '#E3F2FD', '#F1F8E9']} style={styles.gradient}>
-      <SafeAreaView style={styles.safe}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.container}
-        >
-          <View style={styles.titleWrap}>
-            <Ionicons name="wallet" size={52} color="#2A9D8F" />
-            <Text style={styles.title}>华子记账本</Text>
-            <Text style={styles.subtitle}>掌握每一分钱</Text>
+    <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        {/* 顶部图标和标题 */}
+        <View style={styles.brandWrap}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="wallet" size={44} color="#fff" />
           </View>
+          <Text style={styles.brandTitle}>{appTitle}</Text> {/* 动态标题 */}
+          <Text style={styles.brandSub}>掌握你的每一分钱</Text>
+        </View>
 
-          <View style={styles.card}>
+        {/* 登录卡片 */}
+        <View style={styles.card}>
+          <View style={styles.inputBox}>
+            <Ionicons name="person-outline" size={20} color="#999" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="用户名"
-              placeholderTextColor="#888"
+              placeholderTextColor="#aaa"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
             />
+          </View>
+
+          <View style={styles.inputBox}>
+            <Ionicons name="lock-closed-outline" size={20} color="#999" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder="密码"
-              placeholderTextColor="#888"
+              placeholderTextColor="#aaa"
               secureTextEntry
               value={password}
               onChangeText={setPassword}
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-              <LinearGradient
-                colors={['#2A9D8F', '#45B7A5']}
-                style={styles.buttonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.buttonText}>登 录</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-              <Text style={styles.link}>没有账号？去注册</Text>
-            </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </LinearGradient>
+
+          <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} activeOpacity={0.8}>
+            <Text style={styles.loginBtnText}>登 录</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.accountsLink}
+            onPress={() => navigation.navigate('AccountList')}
+          >
+            <Ionicons name="people-outline" size={16} color="#2A9D8F" />
+            <Text style={styles.accountsText}>查看所有账号</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 底部注册入口 */}
+        <TouchableOpacity
+          style={styles.registerLink}
+          onPress={() => navigation.navigate('Register')}
+        >
+          <Text style={styles.registerText}>没有账号？去注册</Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-  },
   safe: {
     flex: 1,
-    paddingTop: 50,
+    backgroundColor: '#F5F7FA',
   },
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
   },
-  titleWrap: {
+  brandWrap: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
-  title: {
-    fontSize: 34,
-    fontWeight: '800',
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#2A9D8F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#2A9D8F',
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  brandTitle: {
+    fontSize: 30,
+    fontWeight: '700',
     color: '#1A1A2E',
-    marginTop: 12,
+    letterSpacing: 1,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#5C6B7A',
+  brandSub: {
+    fontSize: 15,
+    color: '#7C7F88',
     marginTop: 6,
   },
   card: {
-    width: width - 48,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 28,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+  },
+  inputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F9FC',
+    borderRadius: 14,
+    marginBottom: 16,
+    paddingHorizontal: 14,
+    height: 52,
+    borderWidth: 1,
+    borderColor: '#EDEFF2',
+  },
+  inputIcon: {
+    marginRight: 10,
   },
   input: {
-    backgroundColor: '#F7F9FC',
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    height: 56,
+    flex: 1,
     fontSize: 16,
-    marginBottom: 18,
     color: '#333',
-    borderWidth: 1,
-    borderColor: '#E0E6ED',
   },
-  button: {
-    marginTop: 10,
-    marginBottom: 20,
-    borderRadius: 18,
-    overflow: 'hidden',
-  },
-  buttonGradient: {
-    height: 56,
+  loginBtn: {
+    backgroundColor: '#2A9D8F',
+    borderRadius: 14,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 16,
+    shadowColor: '#2A9D8F',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  buttonText: {
+  loginBtnText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     letterSpacing: 2,
   },
-  link: {
-    textAlign: 'center',
+  accountsLink: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+  },
+  accountsText: {
+    color: '#2A9D8F',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  registerLink: {
+    marginTop: 24,
+    alignSelf: 'center',
+  },
+  registerText: {
     color: '#2A9D8F',
     fontSize: 15,
     fontWeight: '500',

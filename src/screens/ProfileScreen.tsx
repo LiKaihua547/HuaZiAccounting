@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
-  Image, Alert, ScrollView, Modal, TextInput
+  Image, Alert, ScrollView, Modal, TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,17 +15,16 @@ const ProfileScreen = () => {
     logout,
     updateAvatar,
     changePassword,
+    nickname,
+    updateNickname,
     appTitle,
-    updateAppTitle,
     noteTitle,
-    updateNoteTitle,
   } = useUser();
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
-  const [titleModalVisible, setTitleModalVisible] = useState(false);
-  const [titleType, setTitleType] = useState<'account' | 'note'>('account');
+  const [nicknameModalVisible, setNicknameModalVisible] = useState(false);
   const [oldPwd, setOldPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
-  const [newTitle, setNewTitle] = useState('');
+  const [newNickname, setNewNickname] = useState(nickname);
 
   const totalIncome = transactions
     .filter(t => t.type === 'income')
@@ -79,25 +78,15 @@ const ProfileScreen = () => {
     }
   };
 
-  const handleUpdateTitle = () => {
-    const trimmed = newTitle.trim();
+  const handleUpdateNickname = () => {
+    const trimmed = newNickname.trim();
     if (!trimmed) {
-      Alert.alert('提示', '名称不能为空');
+      Alert.alert('提示', '昵称不能为空');
       return;
     }
-    if (titleType === 'account') {
-      updateAppTitle(trimmed);
-    } else {
-      updateNoteTitle(trimmed);
-    }
-    setTitleModalVisible(false);
-    Alert.alert('成功', `${titleType === 'account' ? '记账本' : '记事本'}名称已更新`);
-  };
-
-  const openTitleModal = (type: 'account' | 'note') => {
-    setTitleType(type);
-    setNewTitle(type === 'account' ? appTitle : noteTitle);
-    setTitleModalVisible(true);
+    updateNickname(trimmed);
+    setNicknameModalVisible(false);
+    Alert.alert('成功', `昵称已更新为 "${trimmed}"`);
   };
 
   const avatarSource = user?.avatar ? { uri: user.avatar } : undefined;
@@ -148,16 +137,20 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.settingsGroup}>
-          <TouchableOpacity style={styles.settingItem} onPress={() => openTitleModal('account')}>
-            <Ionicons name="create-outline" size={22} color="#666" />
-            <Text style={styles.settingText}>修改记账本名称</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem} onPress={() => openTitleModal('note')}>
-            <Ionicons name="document-text-outline" size={22} color="#666" />
-            <Text style={styles.settingText}>修改记事本标题</Text>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
+          {/* 修改昵称 (替代原来的两个修改标题) */}
+          <TouchableOpacity
+            style={styles.settingItem}
+            onPress={() => {
+              setNewNickname(nickname);
+              setNicknameModalVisible(true);
+            }}
+          >
+            <Ionicons name="person-outline" size={22} color="#666" />
+            <Text style={styles.settingText}>修改昵称</Text>
+            <View style={styles.settingRight}>
+              <Text style={styles.nicknameHint}>{nickname}</Text>
+              <Ionicons name="chevron-forward" size={20} color="#ccc" />
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.settingItem} onPress={() => setPasswordModalVisible(true)}>
@@ -179,7 +172,7 @@ const ProfileScreen = () => {
         </View>
       </ScrollView>
 
-      {/* 修改密码 modal */}
+      {/* 修改密码模态框 */}
       <Modal
         animationType="slide"
         transparent
@@ -217,30 +210,29 @@ const ProfileScreen = () => {
         </View>
       </Modal>
 
-      {/* 修改标题 modal */}
+      {/* 修改昵称模态框 */}
       <Modal
         animationType="slide"
         transparent
-        visible={titleModalVisible}
-        onRequestClose={() => setTitleModalVisible(false)}
+        visible={nicknameModalVisible}
+        onRequestClose={() => setNicknameModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {titleType === 'account' ? '修改记账本名称' : '修改记事本标题'}
-            </Text>
+            <Text style={styles.modalTitle}>修改昵称</Text>
+            <Text style={styles.modalHint}>修改后，记账本和记事本标题将自动更新为：{newNickname || nickname}记账本 / 记事本</Text>
             <TextInput
               style={styles.input}
-              placeholder="输入新名称"
+              placeholder="输入新昵称"
               placeholderTextColor="#999"
-              value={newTitle}
-              onChangeText={setNewTitle}
+              value={newNickname}
+              onChangeText={setNewNickname}
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setTitleModalVisible(false)}>
+              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setNicknameModalVisible(false)}>
                 <Text style={styles.cancelText}>取消</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.confirmBtn]} onPress={handleUpdateTitle}>
+              <TouchableOpacity style={[styles.modalBtn, styles.confirmBtn]} onPress={handleUpdateNickname}>
                 <Text style={styles.confirmText}>确认修改</Text>
               </TouchableOpacity>
             </View>
@@ -268,9 +260,12 @@ const styles = StyleSheet.create({
   settingsGroup: { marginHorizontal: 20, backgroundColor: '#fff', borderRadius: 20, paddingVertical: 8, shadowColor: '#000', shadowOpacity: 0.03, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 20, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#F0F0F0' },
   settingText: { fontSize: 16, color: '#333', marginLeft: 14, flex: 1, fontWeight: '500' },
+  settingRight: { flexDirection: 'row', alignItems: 'center' },
+  nicknameHint: { color: '#999', marginRight: 8 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { backgroundColor: '#fff', width: '85%', borderRadius: 24, padding: 28, alignItems: 'stretch' },
-  modalTitle: { fontSize: 22, fontWeight: '700', color: '#1A1A2E', marginBottom: 24, textAlign: 'center' },
+  modalTitle: { fontSize: 22, fontWeight: '700', color: '#1A1A2E', marginBottom: 12, textAlign: 'center' },
+  modalHint: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 20, lineHeight: 20 },
   input: { backgroundColor: '#F3F4F8', borderRadius: 14, paddingHorizontal: 16, height: 48, fontSize: 16, marginBottom: 16, color: '#333' },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
   modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },

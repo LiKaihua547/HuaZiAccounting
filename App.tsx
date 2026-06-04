@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
-
+import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { UserProvider, useUser } from './src/context/UserContext';
-import { TransactionProvider } from './src/context/TransactionContext';
+import { TransactionProvider, useTransactions } from './src/context/TransactionContext';
 import { NoteProvider } from './src/context/NoteContext';
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import AccountListScreen from './src/screens/AccountListScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AddTransactionScreen from './src/screens/AddTransactionScreen';
 import EditTransactionScreen from './src/screens/EditTransactionScreen';
@@ -18,6 +18,8 @@ import AIChatScreen from './src/screens/AIChatScreen';
 import SummaryScreen from './src/screens/SummaryScreen';
 import NoteListScreen from './src/screens/NoteListScreen';
 import NoteEditorScreen from './src/screens/NoteEditorScreen';
+
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -46,11 +48,11 @@ function NoteStack() {
   );
 }
 
+// 自定义底部栏（进入记事本时隐藏）
 function CustomTabBar({ state, descriptors, navigation }: any) {
-  // 如果当前聚焦的是 NoteTab，隐藏整个底部栏
   const currentRoute = state.routes[state.index];
-  if (currentRoute.name === 'NoteTab') {
-    return null;
+  if (currentRoute.name === 'NoteTab' || currentRoute.name === 'AIChatTab') {
+    return null; // 隐藏底部栏
   }
 
   const icons: Record<string, { focused: string; unfocused: string }> = {
@@ -91,40 +93,63 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
+// 主界面（登录后可见）
 function MainTabs() {
+  const { user, nickname } = useUser();
+  const { transactions, addTransaction } = useTransactions();
+
+
   return (
-    <TransactionProvider>
-      <Tab.Navigator
-        tabBar={(props) => <CustomTabBar {...props} />}
-        screenOptions={{ headerShown: false }}
-      >
-        <Tab.Screen name="HomeTab" component={HomeStack} />
-        <Tab.Screen name="NoteTab" component={NoteStack} />
-        <Tab.Screen name="AIChatTab" component={AIChatScreen} />
-        <Tab.Screen name="ProfileTab" component={ProfileScreen} />
-      </Tab.Navigator>
-    </TransactionProvider>
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="HomeTab" component={HomeStack} />
+      <Tab.Screen name="NoteTab" component={NoteStack} />
+      <Tab.Screen name="AIChatTab" component={AIChatScreen} />
+      <Tab.Screen name="ProfileTab" component={ProfileScreen} />
+    </Tab.Navigator>
   );
 }
 
+// 登录注册栈
 function AuthStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="AccountList" component={AccountListScreen} />
     </Stack.Navigator>
   );
 }
 
+// 根导航器
 function RootNavigator() {
-  const { isLoggedIn } = useUser();
+  const { isLoggedIn, isLoading } = useUser();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F2F6FA' }}>
+        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#2A9D8F' }}>华子记账本</Text>
+        <Text style={{ marginTop: 10, color: '#999' }}>加载中...</Text>
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
-      {isLoggedIn ? <MainTabs /> : <AuthStack />}
+      {isLoggedIn ? (
+        <TransactionProvider>
+          <MainTabs />
+        </TransactionProvider>
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 }
 
+// 应用入口
 export default function App() {
   return (
     <UserProvider>

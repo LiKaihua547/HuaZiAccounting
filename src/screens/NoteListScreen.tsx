@@ -1,6 +1,7 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, SafeAreaView, TouchableOpacity, FlatList, Alert,
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  FlatList, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotes, Note } from '../context/NoteContext';
@@ -121,14 +122,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8,
   },
-  moveBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  deleteBtn: {
-    padding: 6,
-    marginTop: 4,
-  },
+  moveBtn: { paddingVertical: 2, paddingHorizontal: 4 },
+  deleteBtn: { padding: 6, marginTop: 4 },
   addBtn: {
     position: 'absolute',
     right: 20,
