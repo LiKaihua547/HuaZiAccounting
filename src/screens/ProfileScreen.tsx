@@ -1,3 +1,13 @@
+// ====== 新增导入：Excel 导出导入服务 和 笔记上下文 ======
+import {
+  exportTransactionsToExcel,
+  exportNotesToExcel,
+  importTransactionsFromExcel,
+  importNotesFromExcel,
+} from '../services/ExportImportService';
+import { useNotes } from '../context/NoteContext';
+// ====== 以上为新增导入 ======
+
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
@@ -8,8 +18,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTransactions } from '../context/TransactionContext';
 import { useUser } from '../context/UserContext';
 
-const ProfileScreen = () => {
-  const { transactions } = useTransactions();
+const ProfileScreen = ({ navigation }: any) => {
+  const { transactions, addTransaction } = useTransactions();
+  const { notes, addNote } = useNotes(); // 新增：获取笔记数据和添加笔记方法
   const {
     user,
     logout,
@@ -34,6 +45,65 @@ const ProfileScreen = () => {
     .reduce((sum, t) => sum + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
+  // ====== 新增：导出导入处理函数 ======
+  const handleExportTransactions = async () => {
+    try {
+      await exportTransactionsToExcel(transactions, `${nickname}记账本`);
+    } catch (e) {
+      Alert.alert('导出失败', '生成 Excel 文件时出错，请重试。');
+    }
+  };
+
+  const handleExportNotes = async () => {
+    try {
+      await exportNotesToExcel(notes);
+    } catch (e) {
+      Alert.alert('导出失败', '生成 Excel 文件时出错，请重试。');
+    }
+  };
+
+  const handleImportTransactions = async () => {
+    try {
+      const imported = await importTransactionsFromExcel();
+      if (imported.length === 0) {
+        Alert.alert('导入失败', '未找到有效的交易数据');
+        return;
+      }
+      imported.forEach(t => {
+        addTransaction({
+          id: Date.now().toString() + Math.random().toString(36),
+          type: (t.type as 'income' | 'expense') || 'expense',
+          category: t.category || '其他',
+          amount: t.amount || 0,
+          date: t.date || new Date().toLocaleDateString('zh-CN'),
+          datetime: new Date().toISOString(),
+          note: t.note || '',
+        });
+      });
+      Alert.alert('导入成功', `已导入 ${imported.length} 条交易记录`);
+    } catch (e) {
+      Alert.alert('导入失败', '读取文件时出错，请确认文件格式正确。');
+    }
+  };
+
+  const handleImportNotes = async () => {
+    try {
+      const imported = await importNotesFromExcel();
+      if (imported.length === 0) {
+        Alert.alert('导入失败', '未找到有效的笔记数据');
+        return;
+      }
+      imported.forEach(n => {
+        addNote(n.title || '无标题', n.content || '');
+      });
+      Alert.alert('导入成功', `已导入 ${imported.length} 条笔记`);
+    } catch (e) {
+      Alert.alert('导入失败', '读取文件时出错，请确认文件格式正确。');
+    }
+  };
+  // ====== 以上为新增处理函数 ======
+
+  // ... 原有函数保持不变（handlePickAvatar, handleLogout, handleChangePassword, handleUpdateNickname）
   const handlePickAvatar = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -137,7 +207,7 @@ const ProfileScreen = () => {
         </View>
 
         <View style={styles.settingsGroup}>
-          {/* 修改昵称 (替代原来的两个修改标题) */}
+          {/* 修改昵称 */}
           <TouchableOpacity
             style={styles.settingItem}
             onPress={() => {
@@ -153,18 +223,47 @@ const ProfileScreen = () => {
             </View>
           </TouchableOpacity>
 
+          {/* 修改密码 */}
           <TouchableOpacity style={styles.settingItem} onPress={() => setPasswordModalVisible(true)}>
             <Ionicons name="lock-closed-outline" size={22} color="#666" />
             <Text style={styles.settingText}>修改密码</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
 
+          {/* ====== 新增：数据导出导入按钮 ====== */}
+          <TouchableOpacity style={styles.settingItem} onPress={handleExportTransactions}>
+            <Ionicons name="download-outline" size={22} color="#666" />
+            <Text style={styles.settingText}>导出交易记录</Text>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingItem} onPress={handleExportNotes}>
+            <Ionicons name="document-text-outline" size={22} color="#666" />
+            <Text style={styles.settingText}>导出笔记</Text>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingItem} onPress={handleImportTransactions}>
+            <Ionicons name="cloud-upload-outline" size={22} color="#666" />
+            <Text style={styles.settingText}>导入交易记录</Text>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingItem} onPress={handleImportNotes}>
+            <Ionicons name="cloud-upload-outline" size={22} color="#666" />
+            <Text style={styles.settingText}>导入笔记</Text>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
+          </TouchableOpacity>
+          {/* ====== 以上为新增按钮 ====== */}
+
+          {/* 关于我们 */}
           <TouchableOpacity style={styles.settingItem} onPress={() => Alert.alert('关于', `${appTitle} v2.0`)}>
             <Ionicons name="information-circle-outline" size={22} color="#666" />
             <Text style={styles.settingText}>关于我们</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" style={{ marginLeft: 'auto' }} />
           </TouchableOpacity>
 
+          {/* 退出登录 */}
           <TouchableOpacity style={[styles.settingItem, { borderBottomWidth: 0 }]} onPress={handleLogout}>
             <Ionicons name="exit-outline" size={22} color="#E76F51" />
             <Text style={[styles.settingText, { color: '#E76F51' }]}>退出登录</Text>
@@ -245,7 +344,7 @@ const ProfileScreen = () => {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F2F6FA', paddingTop: 30 },
-  content: { paddingBottom: 40 },
+  content: { paddingBottom: 100 },
   avatarWrap: { alignSelf: 'center', marginTop: 20, marginBottom: 24 },
   avatar: { width: 110, height: 110, borderRadius: 55, backgroundColor: '#e0e0e0', borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 4 },
   avatarPlaceholder: { width: 110, height: 110, borderRadius: 55, justifyContent: 'center', alignItems: 'center', borderWidth: 3, borderColor: '#fff' },

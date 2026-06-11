@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "华子记账本",
-    "slug": "HuaZiAccount",
+    "slug": "huazi-accounting",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -13,7 +13,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.huazi.accounting"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.likaihua111.myaccountingapp1"
+      "package": "com.huazi.accounting"
     },
     "web": {
       "favicon": "./assets/favicon.png"
